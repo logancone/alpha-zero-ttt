@@ -75,7 +75,16 @@ class Board():
 
     def calculate_points(self, team):
         tictactoes = 0
-        print(f"Team: {team}")  
+        print(f"Team: {team}")
+
+        tempBoardStorage = self.pieces
+
+        for x in range(self.s):
+            for y in range(self.s):
+                if self[x][y] == 4:
+                    self[x][y] = 1
+                elif self[x][y] == -4:
+                    self[x][y] = -1
 
         for i in range(self.s):
             for j in range(self.s):
@@ -110,6 +119,7 @@ class Board():
                 if self.pieces[x][y] == team:
                     pieces += 1
 
+        self.pieces = tempBoardStorage
         
         print(f"Number of pieces: {pieces}")
         print(f"Number of tictactoes: {tictactoes}")

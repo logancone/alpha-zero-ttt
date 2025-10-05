@@ -18,7 +18,7 @@ class TTTGame(Game):
         # Tile Num, Cost
         2: 10, #Double Tile
         3: 50, #Small Bomb Tile
-        4: 200 #Shield Tile
+        4: 20 #Shield Tile
     }
 
     redPoints = 0 #Team 1
@@ -38,8 +38,8 @@ class TTTGame(Game):
     def getInitBoard(self):
         # return initial board (numpy board)
         self.s = 3
-        self.redPoints = 0
-        self.bluePoints = 0
+        self.redPoints = 100
+        self.bluePoints = 100
         # for key in self.redInv.keys():
         #     self.redInv[key] = 0
         # for key in self.blueInv.keys():
@@ -101,8 +101,8 @@ class TTTGame(Game):
                             # Ensures the value is between 0 and self.s and then checks if it's 0
                             if move[0] - 1 + x < self.s and move[1] - 1 + y < self.s and move[0] - 1 + x >= 0 and move[1] - 1 + y >= 0 and abs(b.pieces[move[0] - 1 + x][move[1] - 1 + y]) != 4:
                                b.execute_move((move[0] - 1 + x, move[1] - 1 + y), player)
-                # case 4: #Sheild
-                #     b.execute_move(move, player * 4)
+                case 4: #Sheild
+                    b.execute_move(move, player * 4)
 
             self.justBoughtTile = 0
             
@@ -237,7 +237,7 @@ class TTTGame(Game):
                 if piece == -1: print("O ",end="")
                 elif piece == 1: print("X ",end="")
                 elif piece == 9 or piece == -9: print("/ ", end="")
-                elif piece == 2 or piece == -2: print(f"{int(piece)} ", end="")
+                elif piece == 4 or piece == -4: print(f"{int(piece)} ", end="")
                 else:
                     if x==n:
                         print("-",end="")

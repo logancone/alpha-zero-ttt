@@ -51,6 +51,6 @@ else:
 
     player2 = n2p  # Player 2 is neural network if it's cpu vs cpu.
 
-arena = Arena.Arena(rp, player2, g, display=TTTGame.display)
+arena = Arena.Arena(hp, hp, g, display=TTTGame.display)
 
 print(arena.playGames(2, verbose=True))
