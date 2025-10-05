@@ -37,6 +37,21 @@ class Board():
                     moveList.append((x,y))
         moves.update(moveList)
         return list(moves)
+    
+    def get_legal_moves_after_double(self, ogMove):
+        moves = set()
+        moveList = []
+
+        # Because there is a 3x3 square that it could be
+        for y in range(3):
+            for x in range(3):
+                # Ensures the value is between 0 and self.s and then checks if it's 0
+                if ogMove[0] - 1 + x < self.s and ogMove[1] - 1 + y < self.s and ogMove[0] - 1 + x >= 0 and ogMove[1] - 1 + y >= 0 and self[ogMove[0] - 1 + x][ogMove[1] - 1 + y] == 0:
+                    moveList.append((ogMove[0] - 1 + x, ogMove[1] - 1 + y))
+        
+        moves.update(moveList)
+        return list(moves)
+
 
     def has_legal_moves(self):
         for y in range(self.n):
@@ -88,29 +103,6 @@ class Board():
                         tictactoes += 1
                         print(f"Right horizontal at: {i, j}")
 
-        """"
-        for i in range(self.s * self.s):
-            if ((i + 2) % self.s > i % self.s):
-                if self[i] == team and self[i + 1] == team and self[i + 2] == team:
-                    tictactoes += 1
-                    print("HOR")
-
-            if (i + (2 * self.s) < self.s * self.s):        
-                if (self[i] == team and self[i + self.s] == team and self[i + (2 * self.s)] == team):          
-                    tictactoes += 1
-                    print("VERT")
-                
-            if ((i + (2 * (self.s - 1))) % self.s < i % self.s and i + (2 * (self.s - 1)) < self.s * self.s):
-                if (self[i] == team and self[i + self.s - 1] == team and self[i + (2 * (self.s - 1))] == team):      
-                    tictactoes += 1
-                    print("LEFT DIA")
-
-            if ((i + (2 * (self.s + 1))) % self.s > i % self.s and i + (2 * (self.s + 1)) < self.s * self.s):       
-                if (self[i] == team and self[i + self.s + 1] == team and self[i + (2 * (self.s + 1))] == team):    
-                    tictactoes += 1
-                    print("RIGHT DIA")
-        """""
-
         # Count Pieces
         pieces = 0
         for x in range(self.s):
@@ -124,6 +116,7 @@ class Board():
         print(f"Total points: {pieces + (tictactoes * 10)}")
 
         return pieces + (tictactoes * 10)         
+    
     
         
     

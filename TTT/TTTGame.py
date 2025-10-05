@@ -18,24 +18,14 @@ class TTTGame(Game):
         # Tile Num, Cost
         2: 10, #Double Tile
         3: 50, #Small Bomb Tile
-        4: 20 #Shield Tile
+        4: 200 #Shield Tile
     }
 
     redPoints = 0 #Team 1
     bluePoints = 0 # Team -1
 
-    redInv = {
-        # Tile Num, Count
-        2: 0,
-        3: 0,
-        4: 0
-    }
-    blueInv = {
-        # Tile Num, Count
-        2: 0,
-        3: 0,
-        4: 0
-    }
+    justBoughtTile = 0
+    recentDoubleMove = ()
 
     @staticmethod
     def getSquarePiece(piece):
@@ -50,10 +40,10 @@ class TTTGame(Game):
         self.s = 3
         self.redPoints = 0
         self.bluePoints = 0
-        for key in self.redInv.keys():
-            self.redInv[key] = 0
-        for key in self.blueInv.keys():
-            self.blueInv[key] = 0
+        # for key in self.redInv.keys():
+        #     self.redInv[key] = 0
+        # for key in self.blueInv.keys():
+        #     self.blueInv[key] = 0
 
         b = Board(self.n, self.s)
         return np.array(b.pieces)
@@ -72,6 +62,7 @@ class TTTGame(Game):
         b = Board(self.n, self.s)
         b.pieces = np.copy(board)
         
+        # Pass Action
         if action == self.n**2:
             self.redPoints += b.calculate_points(1)
             self.bluePoints += b.calculate_points(-1)
@@ -83,13 +74,35 @@ class TTTGame(Game):
             b2 = Board(self.n, self.s)
             return (b2.pieces, player)
 
+        # Buy in Shop
         if action > self.n **2:
-            tile = action - self.n ** 2
+            tile = -action + self.n ** 2 + 5    
             self.buyTile(tile, player)
+            return (b.pieces, player)
 
         move = (int(action/self.n), action%self.n)
-        b.execute_move(move, player)
 
+        # Check if Normal Move or Special Move
+        if self.justBoughtTile == 0:
+            # Normal Move
+            b.execute_move(move, player)
+        else:
+            # Special Move
+            match self.justBoughtTile:
+                case 2:
+                    b.execute_move(move, player) 
+                    self.recentDoubleMove = move  
+                    self.justBoughtTile = 0
+                    return (b.pieces, player)              
+                case 3:
+                    b.execute_move(move, player * 3)
+                case 4:
+                    b.execute_move(move, player * 4)
+
+            self.justBoughtTile = 0
+            
+
+        # End of game point calculation
         if self.s == self.n and not b.has_legal_moves():
             self.redPoints += b.calculate_points(1)
             self.bluePoints += b.calculate_points(-1)
@@ -97,31 +110,39 @@ class TTTGame(Game):
             print(f"Red Points: {self.redPoints}")
             print(f"Blue Points: {self.bluePoints}")
 
-            # self.s += 1
-            # b2 = Board(self.n, self.s)
             return (b.pieces, player)
 
+        self.recentDoubleMove = ()
         return (b.pieces, -player)
 
     def getValidMoves(self, board, player):
         # return a fixed size binary vector
         valids = [0]*self.getActionSize()
-        print(valids)
         b = Board(self.n, self.s)
         b.pieces = np.copy(board)
-        legalMoves =  b.get_legal_moves()
-        affordableItems = self.get_affordable_items(player)
+
+        if self.recentDoubleMove == ():
+            legalMoves =  b.get_legal_moves()
+        else:
+            legalMoves = b.get_legal_moves_after_double(self.recentDoubleMove)
+            
 
         if len(legalMoves)==0:
-            valids[self.n**2]=1
-            # return np.array(valids)
+            # Normal time when no options
+            if self.recentDoubleMove == ():
+                valids[self.n**2]=1
+            else:
+                # If its a double with no options
+                valids[self.recentDoubleMove[0] * self.n + self.recentDoubleMove[1]] = 1
         else:
             for x, y in legalMoves:
                 valids[self.n*x+y]=1
-        
-        for i in range(len(affordableItems)):
-            valids[-i] = affordableItems[i]
-            
+
+        if self.justBoughtTile == 0 and self.recentDoubleMove == ():
+            affordableItems = self.get_affordable_items(player)
+            for i in range(len(affordableItems)):
+                valids[-(i+1)] = affordableItems[i]
+
         return np.array(valids)
 
     def getGameEnded(self, board, player):
@@ -139,7 +160,6 @@ class TTTGame(Game):
             elif self.redPoints == self.bluePoints:
                 return 2
         return 0
-
 
     def getCanonicalForm(self, board, player):
         # return state if player==1, else return -state if player==-1
@@ -174,21 +194,23 @@ class TTTGame(Game):
         else:
             points = self.bluePoints
         affordable_items = []
-        for cost in self.shop_costs.items():
+        for cost in self.shop_costs.values():
             if points >= cost:
                 affordable_items.append(1)
             else:
                 affordable_items.append(0)
-        print(affordable_items)
         return affordable_items
 
     def buyTile(self, tile, player):
+        print(f"BUYINGGGGGGGGGGGGGGGGGGGGGGg {tile} by {player}")
         if player == 1:
             self.redPoints -= self.shop_costs[tile]
-            self.redInv[tile] += 1
+            # self.redInv[tile] += 1
+            self.justBoughtTile = tile
         else:
             self.bluePoints -= self.shop_costs[tile]
-            self.blueInv[tile] += 1
+            # self.blueInv[tile] += 1
+            self.justBoughtTile = tile
 
 
     @staticmethod
@@ -210,6 +232,7 @@ class TTTGame(Game):
                 if piece == -1: print("O ",end="")
                 elif piece == 1: print("X ",end="")
                 elif piece == 9 or piece == -9: print("/ ", end="")
+                elif piece == 2 or piece == -2: print(f"{int(piece)} ", end="")
                 else:
                     if x==n:
                         print("-",end="")
