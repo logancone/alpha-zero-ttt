@@ -31,7 +31,7 @@ class TTTGame(Game):
     def getSquarePiece(piece):
         return TTTGame.square_content[piece]
 
-    def __init__(self, n=4,s=3):
+    def __init__(self, n=6,s=3):
         self.n = n
         self.s = s
 
@@ -89,15 +89,20 @@ class TTTGame(Game):
         else:
             # Special Move
             match self.justBoughtTile:
-                case 2:
+                case 2: #Double
                     b.execute_move(move, player) 
                     self.recentDoubleMove = move  
                     self.justBoughtTile = 0
                     return (b.pieces, player)              
-                case 3:
-                    b.execute_move(move, player * 3)
-                case 4:
-                    b.execute_move(move, player * 4)
+                case 3: #Small Bomb
+                    b.execute_move(move, player)
+                    for y in range(3):
+                        for x in range(3):
+                            # Ensures the value is between 0 and self.s and then checks if it's 0
+                            if move[0] - 1 + x < self.s and move[1] - 1 + y < self.s and move[0] - 1 + x >= 0 and move[1] - 1 + y >= 0 and abs(b.pieces[move[0] - 1 + x][move[1] - 1 + y]) != 4:
+                               b.execute_move((move[0] - 1 + x, move[1] - 1 + y), player)
+                # case 4: #Sheild
+                #     b.execute_move(move, player * 4)
 
             self.justBoughtTile = 0
             
