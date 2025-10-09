@@ -15,10 +15,15 @@ class Board():
         self.n = n
         self.s = s
 
+        self.justBoughtTile = 0
+        self.recentDoubleMove = ()
+
         # Create the empty board array.
-        self.pieces = np.zeros((self.n,self.n))
+        self.pieces = np.full((self.n,self.n), 9)
+        self.pieces[:self.s, :self.s] = 0
+
         
-        self.set_board_size()
+        # self.set_board_size()
 
     # add [][] indexer syntax to the Board
     def __getitem__(self, index): 
@@ -67,17 +72,17 @@ class Board():
 
         self[move[0]][move[1]] = color
 
-    def set_board_size(self):
-        for i in range(self.n):
-            for j in range(self.n):
-                if(i >= self.s or j >= self.s):
-                    self.pieces[i][j] = 9
+    # def set_board_size(self):
+    #     for i in range(self.n):
+    #         for j in range(self.n):
+    #             if(i >= self.s or j >= self.s):
+    #                 self.pieces[i][j] = 9
 
     def calculate_points(self, team):
         tictactoes = 0
-        print(f"Team: {team}")
+        # print(f"Team: {team}")
 
-        tempBoardStorage = self.pieces
+        tempBoardStorage = np.copy(self.pieces)
 
         for x in range(self.s):
             for y in range(self.s):
@@ -92,25 +97,25 @@ class Board():
                 if ((i + 2) % self.s > i % self.s):
                     if self[i][j] == team and self[i + 1][j] == team and self[i + 2][j] == team:
                         tictactoes += 1
-                        print(f"Down vertical at: {i, j}")
+                        # print(f"Down vertical at: {i, j}")
                     
                     # If two down and two right is in range
                     if((j + 2) % self.s > j % self.s):
                         if self[i][j] == team and self[i + 1][j + 1] == team and self[i + 2][j + 2] == team:
                             tictactoes += 1
-                            print(f"Down right diagonal at: {i, j}")
+                            # print(f"Down right diagonal at: {i, j}")
                 
                     # If two down and two left is in range
                     if((j - 2) >= 0 and (j - 2) % self.s < j % self.s):
                         if self[i][j] == team and self[i + 1][j - 1] == team and self[i + 2][j - 2] == team:
                             tictactoes += 1
-                            print(f"Down left diagonal at {i, j}")
+                            # print(f"Down left diagonal at {i, j}")
 
                 # If two left is still in range 
                 if ((j + 2) % self.s > j % self.s):
                     if self[i][j] == team and self[i][j + 1] == team and self[i][j + 2] == team:
                         tictactoes += 1
-                        print(f"Right horizontal at: {i, j}")
+                        # print(f"Right horizontal at: {i, j}")
 
         # Count Pieces
         pieces = 0
@@ -119,11 +124,11 @@ class Board():
                 if self.pieces[x][y] == team:
                     pieces += 1
 
-        self.pieces = tempBoardStorage
-        
-        print(f"Number of pieces: {pieces}")
-        print(f"Number of tictactoes: {tictactoes}")
-        print(f"Total points: {pieces + (tictactoes * 10)}")
+        self.pieces = np.copy(tempBoardStorage)
+
+        # print(f"Number of pieces: {pieces}")
+        # print(f"Number of tictactoes: {tictactoes}")
+        # print(f"Total points: {pieces + (tictactoes * 10)}")
 
         return pieces + (tictactoes * 10)         
     

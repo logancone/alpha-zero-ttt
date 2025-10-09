@@ -24,8 +24,8 @@ class TTTGame(Game):
     redPoints = 0 #Team 1
     bluePoints = 0 # Team -1
 
-    justBoughtTile = 0
-    recentDoubleMove = ()
+    # justBoughtTile = 0
+    # recentDoubleMove = ()
 
     @staticmethod
     def getSquarePiece(piece):
@@ -38,15 +38,12 @@ class TTTGame(Game):
     def getInitBoard(self):
         # return initial board (numpy board)
         self.s = 3
-        self.redPoints = 100
-        self.bluePoints = 100
-        # for key in self.redInv.keys():
-        #     self.redInv[key] = 0
-        # for key in self.blueInv.keys():
-        #     self.blueInv[key] = 0
+        self.redPoints = 0
+        self.bluePoints = 0
 
         b = Board(self.n, self.s)
-        return np.array(b.pieces)
+
+        return (np.array(b.pieces), b.justBoughtTile, b.recentDoubleMove)
 
     def getBoardSize(self):
         # (a,b) tuple
@@ -59,41 +56,56 @@ class TTTGame(Game):
     def getNextState(self, board, player, action):
         # if player takes action on board, return next (board,player)
         # action must be a valid move
-        b = Board(self.n, self.s)
-        b.pieces = np.copy(board)
+        pieces, jbt, rdm = board
+        b = Board.__new__(Board)
+        b.n = self.n
+        b.s = self.s
+        b.pieces = np.copy(pieces)
+        b.justBoughtTile = jbt
+        b.recentDoubleMove = rdm
         
         # Pass Action
         if action == self.n**2:
             self.redPoints += b.calculate_points(1)
             self.bluePoints += b.calculate_points(-1)
 
-            print(f"Red Points: {self.redPoints}")
-            print(f"Blue Points: {self.bluePoints}")
+            # print(f"Red Points: {self.redPoints}")
+            # print(f"Blue Points: {self.bluePoints}")
         
             self.s += 1
-            b2 = Board(self.n, self.s)
-            return (b2.pieces, player)
+            b2 = Board.__new__(Board)
+            b2.pieces = np.full((self.n,self.n), 9)
+            b2.pieces[:self.s, :self.s] = 0
+            b2.n = self.n
+            b2.s = self.s
+            b2.justBoughtTile = 0
+            b2.recentDoubleMove = ()
+            return (np.copy(b2.pieces),
+                int(b.justBoughtTile) if b.justBoughtTile else 0,
+                tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), player
 
         # Buy in Shop
         if action > self.n **2:
             tile = -action + self.n ** 2 + 5    
-            self.buyTile(tile, player)
-            return (b.pieces, player)
+            self.buyTile(tile, b, player)
+            return (np.copy(b.pieces),
+                int(b.justBoughtTile) if b.justBoughtTile else 0,
+                tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), player
 
         move = (int(action/self.n), action%self.n)
 
         # Check if Normal Move or Special Move
-        if self.justBoughtTile == 0:
+        if b.justBoughtTile == 0:
             # Normal Move
             b.execute_move(move, player)
         else:
             # Special Move
-            match self.justBoughtTile:
+            match b.justBoughtTile:
                 case 2: #Double
                     b.execute_move(move, player) 
-                    self.recentDoubleMove = move  
-                    self.justBoughtTile = 0
-                    return (b.pieces, player)              
+                    b.recentDoubleMove = move  
+                    b.justBoughtTile = 0
+                    return ((b.pieces, b.justBoughtTile, b.recentDoubleMove), -player)              
                 case 3: #Small Bomb
                     b.execute_move(move, player)
                     for y in range(3):
@@ -104,7 +116,7 @@ class TTTGame(Game):
                 case 4: #Sheild
                     b.execute_move(move, player * 4)
 
-            self.justBoughtTile = 0
+            b.justBoughtTile = 0
             
 
         # End of game point calculation
@@ -112,38 +124,46 @@ class TTTGame(Game):
             self.redPoints += b.calculate_points(1)
             self.bluePoints += b.calculate_points(-1)
 
-            print(f"Red Points: {self.redPoints}")
-            print(f"Blue Points: {self.bluePoints}")
+            # print(f"Red Points: {self.redPoints}")
+            # print(f"Blue Points: {self.bluePoints}")
 
-            return (b.pieces, player)
+            return (np.copy(b.pieces),
+                int(b.justBoughtTile) if b.justBoughtTile else 0,
+                tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), player
 
-        self.recentDoubleMove = ()
-        return (b.pieces, -player)
+        b.recentDoubleMove = ()
+        return (np.copy(b.pieces),
+            int(b.justBoughtTile) if b.justBoughtTile else 0,
+            tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), -player
 
     def getValidMoves(self, board, player):
         # return a fixed size binary vector
         valids = [0]*self.getActionSize()
+        board_array, jbt, rdm = board
         b = Board(self.n, self.s)
-        b.pieces = np.copy(board)
+        b.pieces = np.copy(board_array)
+        b.justBoughtTile = jbt
+        b.recentDoubleMove = rdm
 
-        if self.recentDoubleMove == ():
+
+        if b.recentDoubleMove == ():
             legalMoves =  b.get_legal_moves()
         else:
-            legalMoves = b.get_legal_moves_after_double(self.recentDoubleMove)
+            legalMoves = b.get_legal_moves_after_double(b.recentDoubleMove)
             
 
         if len(legalMoves)==0:
             # Normal time when no options
-            if self.recentDoubleMove == ():
+            if b.recentDoubleMove == ():
                 valids[self.n**2]=1
             else:
                 # If its a double with no options
-                valids[self.recentDoubleMove[0] * self.n + self.recentDoubleMove[1]] = 1
+                valids[b.recentDoubleMove[0] * self.n + b.recentDoubleMove[1]] = 1
         else:
             for x, y in legalMoves:
                 valids[self.n*x+y]=1
 
-        if self.justBoughtTile == 0 and self.recentDoubleMove == ():
+        if b.justBoughtTile == 0 and b.recentDoubleMove == ():
             affordableItems = self.get_affordable_items(player)
             for i in range(len(affordableItems)):
                 valids[-(i+1)] = affordableItems[i]
@@ -155,7 +175,7 @@ class TTTGame(Game):
         # player = 1
         if(self.n == self.s):
             b = Board(self.n, self.s)
-            b.pieces = np.copy(board)
+            b.pieces = np.copy(board[0])
             if b.has_legal_moves():
                 return 0
             if self.redPoints > self.bluePoints:
@@ -168,30 +188,67 @@ class TTTGame(Game):
 
     def getCanonicalForm(self, board, player):
         # return state if player==1, else return -state if player==-1
-        return player*board
+        pieces, jbt, rdm = board
+        return (player*pieces, jbt, rdm)
 
     def getSymmetries(self, board, pi):
-        # mirror, rotational
-        assert(len(pi) == self.n**2+1)  # 1 for pass
-        pi_board = np.reshape(pi[:-1], (self.n, self.n))
-        l = []
+        # Lowkey chatGPTed ts function so rip
+        """
+        Generate symmetrical versions of the board and policy, but only for
+        the active SxS playable region. Unplayable cells and non-board actions
+        (pass/shop) remain unchanged.
+        """
+        n = self.n
+        s = self.s  # current playable area size
 
-        for i in range(1, 5):
-            for j in [True, False]:
-                newB = np.rot90(board, i)
-                newPi = np.rot90(pi_board, i)
-                if j:
+        board_array, jbt, rdm = board
+
+        # Number of actions related to board positions
+        board_action_count = n ** 2
+        extra_actions = pi[board_action_count:]  # pass + shop actions (unchanged)
+
+        # Split policy into board region + extras
+        pi_board = np.reshape(pi[:board_action_count], (n, n))
+
+        # Isolate playable area
+        playable_board = board_array[:s, :s]
+        playable_pi = pi_board[:s, :s]
+
+        symmetries = []
+
+        for rot in range(4):  # 0°, 90°, 180°, 270°
+            for flip in [False, True]:
+                # Rotate playable region
+                newB = np.rot90(playable_board, rot)
+                newPi = np.rot90(playable_pi, rot)
+
+                # Optional horizontal mirror
+                if flip:
                     newB = np.fliplr(newB)
                     newPi = np.fliplr(newPi)
-                l += [(newB, list(newPi.ravel()) + [pi[-1]])]
-        return l
+
+                # Embed back into full board shape
+                newFullBoard = np.copy(board_array)
+                newFullBoard[:s, :s] = newB
+
+                # Rebuild pi with only playable region replaced
+                newFullPi = np.zeros_like(pi_board)
+                newFullPi[:s, :s] = newPi
+
+                # Flatten board-policy and reattach extra actions
+                symmetries.append((newFullBoard, list(newFullPi.ravel()) + list(extra_actions)))
+
+        return symmetries
 
     def stringRepresentation(self, board):
-        return board.tobytes()
+        pieces, jbt, rdm = board
+        return (pieces.tobytes(), jbt, rdm)
+        # return board[0].tobytes()
 
     def stringRepresentationReadable(self, board):
-        board_s = "".join(self.square_content[square] for row in board for square in row)
-        return board_s
+        pieces, jbt, rdm = board
+        board_s = "".join(self.square_content[square] for row in pieces for square in row)
+        return f"{board_s} | jbt={jbt} | rdm={rdm}"
 
     def get_affordable_items(self, player):
         if player == 1:
@@ -206,16 +263,16 @@ class TTTGame(Game):
                 affordable_items.append(0)
         return affordable_items
 
-    def buyTile(self, tile, player):
+    def buyTile(self, tile, board, player):
         print(f"BUYINGGGGGGGGGGGGGGGGGGGGGGg {tile} by {player}")
         if player == 1:
             self.redPoints -= self.shop_costs[tile]
             # self.redInv[tile] += 1
-            self.justBoughtTile = tile
+            board.justBoughtTile = tile
         else:
             self.bluePoints -= self.shop_costs[tile]
             # self.blueInv[tile] += 1
-            self.justBoughtTile = tile
+            board.justBoughtTile = tile
 
 
     @staticmethod
