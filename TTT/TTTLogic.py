@@ -18,12 +18,15 @@ class Board():
         self.justBoughtTile = 0
         self.recentDoubleMove = ()
 
+        self.redPoints = 0
+        self.bluePoints = 0
+
+        # print(s)
         # Create the empty board array.
         self.pieces = np.full((self.n,self.n), 9)
         self.pieces[:self.s, :self.s] = 0
+        # print(self.pieces)
 
-        
-        # self.set_board_size()
 
     # add [][] indexer syntax to the Board
     def __getitem__(self, index): 
@@ -72,14 +75,9 @@ class Board():
 
         self[move[0]][move[1]] = color
 
-    # def set_board_size(self):
-    #     for i in range(self.n):
-    #         for j in range(self.n):
-    #             if(i >= self.s or j >= self.s):
-    #                 self.pieces[i][j] = 9
-
     def calculate_points(self, team):
         tictactoes = 0
+        # print(self.s)
         # print(f"Team: {team}")
 
         tempBoardStorage = np.copy(self.pieces)
