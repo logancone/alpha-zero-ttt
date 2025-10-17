@@ -21,11 +21,9 @@ class Board():
         self.redPoints = 0
         self.bluePoints = 0
 
-        # print(s)
         # Create the empty board array.
         self.pieces = np.full((self.n,self.n), 9)
         self.pieces[:self.s, :self.s] = 0
-        # print(self.pieces)
 
 
     # add [][] indexer syntax to the Board
@@ -77,8 +75,6 @@ class Board():
 
     def calculate_points(self, team):
         tictactoes = 0
-        # print(self.s)
-        # print(f"Team: {team}")
 
         tempBoardStorage = np.copy(self.pieces)
 

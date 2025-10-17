@@ -21,37 +21,19 @@ class TTTGame(Game):
         4: 20 #Shield Tile
     }
 
-    # redPoints = 0 #Team 1
-    # bluePoints = 0 # Team -1
-
-    # justBoughtTile = 0
-    # recentDoubleMove = ()
-
     @staticmethod
     def getSquarePiece(piece):
         return TTTGame.square_content[piece]
-
-    # def __init__(self, n=6,s=3):
-    #     self.n = n
-    #     self.s = s
 
     def __init__(self, n=6):
         self.n = n
 
     def getInitBoard(self):
-        # return initial board (numpy board)
-        # self.s = 3
-        # self.redPoints = 0
-        # self.bluePoints = 0
-
-        # b = Board(self.n, self.s)
         b = Board(self.n, 3)
-
 
         return (np.array(b.pieces), b.justBoughtTile, b.recentDoubleMove, b.redPoints, b.bluePoints, b.n, b.s)
 
     def getBoardSize(self):
-        # (a,b) tuple
         return (self.n, self.n)
 
     def getActionSize(self):
@@ -68,44 +50,22 @@ class TTTGame(Game):
         b.recentDoubleMove = rdm
         b.redPoints = rp
         b.bluePoints = bp
-
-        # print(f"Red: {b.redPoints}")
-        # print(f"Blue: {b.bluePoints}")
         
         # Pass Action
         if action == n**2:
-            # print(f"PASSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS {s} {n}")
-            # print("PASS")
-
-            # print(f"PRE: RP: {b.redPoints} | BP: {b.bluePoints}")
             b.redPoints += b.calculate_points(1)
             b.bluePoints += b.calculate_points(-1)
-            # print(f"POST: RP: {b.redPoints} | BP: {b.bluePoints}")
-            # print(f"Red Points: {self.redPoints}")
-            # print(f"Blue Points: {self.bluePoints}")
-        
-            # if self.s < 6:
+
             s += 1
             b2 = Board(n, s)
-            # b2.pieces = np.full((self.n,self.n), 9)
-            # b2.pieces[:self.s, :self.s] = 0
-            # b2.n = self.n
-            # b2.s = self.s
-            # print(f"B2: {b2.pieces}")
-            # return (np.copy(b2.pieces),
-            #     int(b.justBoughtTile) if b.justBoughtTile else 0,
-            #     tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), player
+            
             return (np.copy(b2.pieces), b2.justBoughtTile, b2.recentDoubleMove, b.redPoints, b.bluePoints, n, s), player
 
         # Buy in Shop
         if action > n **2:
-            # print(f"Red: {self.redPoints}")
-            # print(f"Blue: {self.bluePoints}")
             tile = -action + n ** 2 + 5    
             self.buyTile(tile, b, player)
-            # return (np.copy(b.pieces),
-            #     int(b.justBoughtTile) if b.justBoughtTile else 0,
-            #     tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), player
+           
             return (np.copy(b.pieces), b.justBoughtTile, b.recentDoubleMove, b.redPoints, b.bluePoints, n, s), player
 
         move = (int(action/n), action%n)
@@ -140,18 +100,10 @@ class TTTGame(Game):
             b.redPoints += b.calculate_points(1)
             b.bluePoints += b.calculate_points(-1)
 
-            # print(f"Red Points: {self.redPoints}")
-            # print(f"Blue Points: {self.bluePoints}")
-
-            # return (np.copy(b.pieces),
-            #     int(b.justBoughtTile) if b.justBoughtTile else 0,
-            #     tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), player
             return (np.copy(b.pieces), b.justBoughtTile, b.recentDoubleMove, b.redPoints, b.bluePoints, n, s), player
 
         b.recentDoubleMove = ()
-        # return (np.copy(b.pieces),
-        #     int(b.justBoughtTile) if b.justBoughtTile else 0,
-        #     tuple(b.recentDoubleMove) if b.recentDoubleMove else ()), -player
+
         return (np.copy(b.pieces), b.justBoughtTile, b.recentDoubleMove, b.redPoints, b.bluePoints, n, s), -player
 
     def getValidMoves(self, board, player):
@@ -184,8 +136,6 @@ class TTTGame(Game):
             for x, y in legalMoves:
                 valids[n*x+y]=1
 
-        # print(f"JBT: {b.justBoughtTile}")
-        # print(f"RDM: {b.recentDoubleMove}")
         if b.justBoughtTile == 0 and b.recentDoubleMove == ():
             affordableItems = self.get_affordable_items(b, player)
             for i in range(len(affordableItems)):
@@ -198,17 +148,10 @@ class TTTGame(Game):
         # player = 1
         pieces, jbt, rdm, rp, bp, n, s = board
 
-        if(n == s):
-            # print(f"SS: {s}")
-            # print(f"SN: {n}")
-            
+        if(n == s):            
             b = Board(n, s)
             b.pieces = np.copy(pieces)
 
-
-            # print(f"BS: {b.s}")
-            # print(f"BN: {b.n}")
-            # print(pieces)
             if b.has_legal_moves():
                 return 0
             if rp > bp:
@@ -232,9 +175,6 @@ class TTTGame(Game):
         (pass/shop) remain unchanged.
         """
         board_array, jbt, rdm, rp, bp, n, s = board
-        # n = self.n
-        # s = self.s  # current playable area size
-
         
 
         # Number of actions related to board positions
@@ -277,7 +217,6 @@ class TTTGame(Game):
     def stringRepresentation(self, board):
         pieces, jbt, rdm, rp, bp, n, s = board
         return (pieces.tobytes(), jbt, rdm, rp, bp, n, s)
-        # return board[0].tobytes()
 
     def stringRepresentationReadable(self, board):
         pieces, jbt, rdm, rp, bp, n, s = board
@@ -298,14 +237,11 @@ class TTTGame(Game):
         return affordable_items
 
     def buyTile(self, tile, board, player):
-        # print(f"BUYINGGGGGGGGGGGGGGGGGGGGGGg {tile} by {player}")
         if player == 1:
             board.redPoints -= self.shop_costs[tile]
-            # self.redInv[tile] += 1
             board.justBoughtTile = tile
         else:
             board.bluePoints -= self.shop_costs[tile]
-            # self.blueInv[tile] += 1
             board.justBoughtTile = tile
 
 
